@@ -1,0 +1,36 @@
+markdown
+# 视觉模块接口约定
+
+## 一、A2 输出：掩膜文件
+- 红色棋子掩膜：`mask_red.png`
+- 黑色棋子掩膜：`mask_black.png`
+- 红黑合并掩膜（可选）：`mask_combined.png`
+- 格式：PNG（禁止使用JPG，避免有损压缩产生灰色过渡像素）
+- 图像规格：与原始摄像头帧尺寸一致（如 640x480 或 1280x720），二值图像（0=背景，255=棋子）
+- 存储路径：统一存放在 `output/masks/` 目录下
+- 更新频率：每处理一帧，覆盖保存一次（不累加）
+
+## 二、B 输出：棋子坐标列表
+- 数据格式：Python 列表，每个元素是一个元组。
+- 示例：
+  ```python
+  pieces = [
+      (320, 240, "red"),
+      (450, 180, "black"),
+  ]
+字段说明：
+
+x：圆心横坐标（int，像素，原点在左上角）
+
+y：圆心纵坐标（int，像素，原点在左上角）
+
+color：颜色分类（str，取值仅限 "red" 或 "black"）
+
+约束：如果画面中没有棋子，必须返回空列表 []，严禁返回 None，防止遍历时报错。
+
+三、文件目录结构约定
+modules/preprocess.py：A1 和 A2 的代码
+
+modules/postprocess.py：B 的代码
+
+vision.py：C（组长）最终整合的模块，提供统一接口 def detect_pieces(frame) -> list:
