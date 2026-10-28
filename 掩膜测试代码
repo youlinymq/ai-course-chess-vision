@@ -1,0 +1,80 @@
+import cv2
+import numpy as np
+
+def nothing(x):
+    pass
+
+# 滑块绑定到 origin 窗口
+cv2.namedWindow("origin", cv2.WINDOW_NORMAL)
+
+# 红色棋子滑块
+cv2.createTrackbar("R1_Hmin", "origin", 0, 179, nothing)
+cv2.createTrackbar("R1_Hmax", "origin", 22, 179, nothing)
+cv2.createTrackbar("R2_Hmin", "origin", 160, 179, nothing)
+cv2.createTrackbar("R2_Hmax", "origin", 179, 179, nothing)
+cv2.createTrackbar("R_Smin", "origin", 100, 255, nothing)
+cv2.createTrackbar("R_Smax", "origin", 204, 255, nothing)
+cv2.createTrackbar("R_Vmin", "origin", 70, 255, nothing)
+cv2.createTrackbar("R_Vmax", "origin", 255, 255, nothing)
+
+# 黑色棋子滑块
+cv2.createTrackbar("Bk_Hmin", "origin", 0, 179, nothing)
+cv2.createTrackbar("Bk_Hmax", "origin", 179, 179, nothing)
+cv2.createTrackbar("Bk_Smin", "origin", 0, 255, nothing)
+cv2.createTrackbar("Bk_Smax", "origin", 60, 255, nothing)
+cv2.createTrackbar("Bk_Vmin", "origin", 0, 255, nothing)
+cv2.createTrackbar("Bk_Vmax", "origin", 80, 255, nothing)
+
+cap = cv2.VideoCapture("http://192.168.110.79:8080/video")
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        print("读取画面失败！")
+        break
+
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    # 读取滑块
+    r1hmin = cv2.getTrackbarPos("R1_Hmin", "origin")
+    r1hmax = cv2.getTrackbarPos("R1_Hmax", "origin")
+    r2hmin = cv2.getTrackbarPos("R2_Hmin", "origin")
+    r2hmax = cv2.getTrackbarPos("R2_Hmax", "origin")
+    rsmin = cv2.getTrackbarPos("R_Smin", "origin")
+    rsmax = cv2.getTrackbarPos("R_Smax", "origin")
+    rvmin = cv2.getTrackbarPos("R_Vmin", "origin")
+    rvmax = cv2.getTrackbarPos("R_Vmax", "origin")
+
+    bkhmin = cv2.getTrackbarPos("Bk_Hmin", "origin")
+    bkhmax = cv2.getTrackbarPos("Bk_Hmax", "origin")
+    bksmin = cv2.getTrackbarPos("Bk_Smin", "origin")
+    bksmax = cv2.getTrackbarPos("Bk_Smax", "origin")
+    bkvmin = cv2.getTrackbarPos("Bk_Vmin", "origin")
+    bkvmax = cv2.getTrackbarPos("Bk_Vmax", "origin")
+
+    # 红色两段 mask
+    lower_red1 = np.array([r1hmin, rsmin, rvmin])
+    upper_red1 = np.array([r1hmax, rsmax, rvmax])
+    lower_red2 = np.array([r2hmin, rsmin, rvmin])
+    upper_red2 = np.array([r2hmax, rsmax, rvmax])
+
+    mask_r1 = cv2.inRange(hsv, lower_red1, upper_red1)
+    mask_r2 = cv2.inRange(hsv, lower_red2, upper_red2)
+    mask_red = cv2.bitwise_or(mask_r1, mask_r2)
+
+    # 黑色 mask
+    lower_black = np.array([bkhmin, bksmin, bkvmin])
+    upper_black = np.array([bkhmax, bksmax, bkvmax])
+    mask_black = cv2.inRange(hsv, lower_black, upper_black)
+
+    # 只弹出3个窗口
+    cv2.imshow("origin", frame)
+    cv2.imshow("mask_red", mask_red)
+    cv2.imshow("mask_black", mask_black)
+
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
